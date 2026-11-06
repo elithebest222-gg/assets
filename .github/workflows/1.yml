@@ -1,41 +1,24 @@
-name: Convert 900 Folder to Git LFS
+name: Cleanup LFS configuration
 on:
   workflow_dispatch:
 
 jobs:
-  convert-to-lfs:
+  cleanup:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout Your Repository with Privileged Token
+      - name: Checkout Repository
         uses: actions/checkout@v4
         with:
           token: ${{ secrets.LFS_TOKEN }}
-          fetch-depth: 0
 
-      - name: Initialize and Configure Git LFS
+      - name: Remove Git LFS Attributes Tracker
         run: |
-          git lfs install
+          # Delete the attributes file causing the push failure
+          rm -f .gitattributes
           
-          # Setup tracking rules for Geometry Dash web assets
-          git lfs track "900/*.wasm"
-          git lfs track "900/*.data"
-          git lfs track "900/*.br"
-          git lfs track "900/*.part*"
-          
-          # Stage the tracking attributes file
-          git add .gitattributes
-
-      - name: Force Git to Convert Existing Files to LFS
-        run: |
-          # The --ignore-unmatch flag prevents the workflow from failing if files aren't tracked yet
-          git rm --cached -r --ignore-unmatch 900/
-          git add 900/
-
-      - name: Push LFS Pointers Back to Repository
-        run: |
           git config --global user.name "elithebest222-gg"
           git config --global user.email "226623223+elithebest222-gg@users.noreply.github.com"
           
-          git commit -m "Successfully converted 900 folder assets into Git LFS pointers via PAT authentication" || echo "No files needed conversion"
-          git pull --rebase origin main
+          git add .gitattributes || true
+          git commit -m "Remove broken LFS configuration tracking layout" || echo "Clean"
           git push origin main
