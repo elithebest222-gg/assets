@@ -5,12 +5,11 @@ on:
 jobs:
   convert-to-lfs:
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
     steps:
-      - name: Checkout Your Repository
+      - name: Checkout Your Repository with Privileged Token
         uses: actions/checkout@v4
         with:
+          token: ${{ secrets.LFS_TOKEN }}
           fetch-depth: 0
 
       - name: Initialize and Configure Git LFS
@@ -34,9 +33,9 @@ jobs:
 
       - name: Push LFS Pointers Back to Repository
         run: |
-          git config --global user.name "github-actions[bot]"
-          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git config --global user.name "elithebest222-gg"
+          git config --global user.email "226623223+elithebest222-gg@users.noreply.github.com"
           
-          git commit -m "Successfully converted 900 folder assets into Git LFS pointers" || echo "No files needed conversion"
+          git commit -m "Successfully converted 900 folder assets into Git LFS pointers via PAT authentication" || echo "No files needed conversion"
           git pull --rebase origin main
           git push origin main
