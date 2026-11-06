@@ -1,57 +1,42 @@
-name: Copy Geometry Dash Web Port
+name: Convert 900 Folder to Git LFS
 on:
   workflow_dispatch:
 
 jobs:
-  copy-files:
+  convert-to-lfs:
     runs-on: ubuntu-latest
     permissions:
-      contents: write # Explicitly ensures push access permission
+      contents: write
     steps:
-      - name: Checkout your repository
+      - name: Checkout Your Repository
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: Clone Geometry Dash repo
+      - name: Initialize and Configure Git LFS
         run: |
-          # Clones the repository safely
-          git clone --depth 1 https://github.com/elithebest222-gg/geometry-dash temp-repo
-          
-          # Pull Git LFS assets if any of the compressed parts require it
-          cd temp-repo
           git lfs install
-          git lfs pull
-          cd ..
-
-      - name: Move Assets to Target Location
-        run: |
-          # Setup destination root structure inside your assets repository
-          mkdir -p 900
           
-          # Clean out Git metadata from the temporary folder before copying
-          rm -rf temp-repo/.git
+          # Setup tracking rules for Geometry Dash web assets
+          git lfs track "900/*.wasm"
+          git lfs track "900/*.data"
+          git lfs track "900/*.br"
+          git lfs track "900/*.part*"
           
-          # Mirror the directory cleanly into the 900 directory
-          if [ -f "temp-repo/index.html" ]; then
-            rsync -av --delete temp-repo/ 900/
-          else
-            echo "::error::Source game files not found in temp-repo!"
-            exit 1
-          fi
+          # Stage the tracking attributes file
+          git add .gitattributes
 
-      - name: Clean Up Temporary Workspace
+      - name: Force Git to Convert Existing Files to LFS
         run: |
-          rm -rf temp-repo
+          # This forces Git to re-index the 900 folder using LFS rules
+          git rm --cached -r 900/ || true
+          git add 900/
 
-      - name: Commit and push changes safely to main
+      - name: Push LFS Pointers Back to Repository
         run: |
           git config --global user.name "github-actions[bot]"
-          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git config --global user.email "github-actions[bot]@://github.com"
           
-          # Stage and commit the game assets inside the 900 folder
-          git add 900/
-          git commit -m "Imported Geometry Dash web assets directly into 900 via automated workflow" || echo "No changes to commit"
-          
+          git commit -m "Successfully converted 900 folder assets into Git LFS pointers" || echo "No files needed conversion"
           git pull --rebase origin main
           git push origin main
