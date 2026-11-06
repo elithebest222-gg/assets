@@ -1,0 +1,57 @@
+name: Copy Geometry Dash Web Port
+on:
+  workflow_dispatch:
+
+jobs:
+  copy-files:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # Explicitly ensures push access permission
+    steps:
+      - name: Checkout your repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Clone Geometry Dash repo
+        run: |
+          # Clones the repository safely
+          git clone --depth 1 https://github.com/elithebest222-gg/geometry-dash temp-repo
+          
+          # Pull Git LFS assets if any of the compressed parts require it
+          cd temp-repo
+          git lfs install
+          git lfs pull
+          cd ..
+
+      - name: Move Assets to Target Location
+        run: |
+          # Setup destination root structure inside your assets repository
+          mkdir -p 900
+          
+          # Clean out Git metadata from the temporary folder before copying
+          rm -rf temp-repo/.git
+          
+          # Mirror the directory cleanly into the 900 directory
+          if [ -f "temp-repo/index.html" ]; then
+            rsync -av --delete temp-repo/ 900/
+          else
+            echo "::error::Source game files not found in temp-repo!"
+            exit 1
+          fi
+
+      - name: Clean Up Temporary Workspace
+        run: |
+          rm -rf temp-repo
+
+      - name: Commit and push changes safely to main
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          
+          # Stage and commit the game assets inside the 900 folder
+          git add 900/
+          git commit -m "Imported Geometry Dash web assets directly into 900 via automated workflow" || echo "No changes to commit"
+          
+          git pull --rebase origin main
+          git push origin main
