@@ -28,14 +28,14 @@ jobs:
 
       - name: Force Git to Convert Existing Files to LFS
         run: |
-          # This forces Git to re-index the 900 folder using LFS rules
-          git rm --cached -r 900/ || true
+          # The --ignore-unmatch flag prevents the workflow from failing if files aren't tracked yet
+          git rm --cached -r --ignore-unmatch 900/
           git add 900/
 
       - name: Push LFS Pointers Back to Repository
         run: |
           git config --global user.name "github-actions[bot]"
-          git config --global user.email "github-actions[bot]@://github.com"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
           
           git commit -m "Successfully converted 900 folder assets into Git LFS pointers" || echo "No files needed conversion"
           git pull --rebase origin main
